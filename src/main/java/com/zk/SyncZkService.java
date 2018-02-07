@@ -32,7 +32,7 @@ public class SyncZkService {
         zkClient = new ZkClient();
         ibatisClient = new IbatisClient();
         //1.同步客户端策略
-        //syncZkClientCluster();
+        syncZkClientCluster();
         //2.同步服务
         syncZkServices();
         //zkClient.closeZk();
