@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="csfServiceSql">
+
+    <!-- 使用别名可以避免每次都输入类路径全称 -->
+    <typeAlias alias="clientMapping" type="com.csf.bean.CsfClientClusterMapping"/>
+    <typeAlias alias="csfServices" type="com.csf.bean.CsfServices"/>
+
+
+    <resultMap id="clientMapping" class="clientMapping">
+        <result property="cfgId" column="CFG_ID"/>
+        <result property="clientName" column="CLIENT_NAME"/>
+        <result property="centerCode" column="CENTER_CODE"/>
+        <result property="clusterName" column="CLUSTER_NAME"/>
+        <result property="state" column="STATE"/>
+        <result property="remark" column="REMARK"/>
+        <result property="lastSyncInfo" column="LAST_SYNC_INFO"/>
+        <result property="synchronize" column="SYNCHRONIZE"/>
+    </resultMap>
+
+    <resultMap id="csfServices" class="csfServices">
+        <result property="serviceId" column="SERVICE_ID"/>
+        <result property="serviceCode" column="SERVICE_CODE"/>
+        <result property="centerCode" column="CENTER_CODE"/>
+        <result property="serviceName" column="SERVICE_NAME"/>
+        <result property="description" column="DESCRIPTION"/>
+        <result property="serviceType" column="SERVICE_TYPE"/>
+        <result property="serviceExtendType" column="SERVICE_EXTEND_TYPE"/>
+        <result property="relatedTemplateTag" column="RELATED_TEMPLATE_TAG"/>
+        <result property="srvInterface" column="SRV_INTERFACE"/>
+        <result property="srvImplClass" column="SRV_IMPL_CLASS"/>
+        <result property="srvMethod" column="SRV_METHOD"/>
+        <result property="srvReturn" column="SRV_RETURN"/>
+        <result property="protocol" column="PROTOCOL"/>
+        <result property="version" column="VERSION"/>
+        <result property="status" column="STATUS"/>
+        <result property="opId" column="OP_ID"/>
+        <result property="createDate" column="CREATE_DATE"/>
+        <result property="validDate" column="VALID_DATE"/>
+        <result property="expireDate" column="EXPIRE_DATE"/>
+        <result property="extA" column="EXT_A"/>
+        <result property="extB" column="EXT_B"/>
+        <result property="extC" column="EXT_C"/>
+        <result property="remarks" column="REMARKS"/>
+        <result property="mappingCode" column="MAPPING_CODE"/>
+        <result property="pathMapping" column="PATH_MAPPING"/>
+    </resultMap>
+
+    <!-- 根据中心查询所有的客户端策略 -->
+    <select id="selectAllClientMapping" parameterClass="java.lang.String" resultMap="clientMapping">
+      SELECT CFG_ID,CLIENT_NAME,CENTER_CODE,CLUSTER_NAME,STATE,REMARK,LAST_SYNC_INFO,SYNCHRONIZE FROM CSF.CSF_CLIENT_CLUSTER_MAPPING WHERE STATE ='U'  AND CENTER_CODE= #CENTER_CODE#
+    </select>
+
+    <parameterMap id="servicesMap" class="java.util.Map">
+        <parameter property="centerCode"/>
+        <parameter property="startNum"/>
+        <parameter property="endNum"/>
+    </parameterMap>
+
+    <select id="selectAllServicesByCenterCode" parameterClass="java.util.Map" resultMap="csfServices">
+    <![CDATA[ SELECT SERVICE_ID,
+        SERVICE_CODE,
+        CENTER_CODE,
+        SERVICE_NAME,
+        DESCRIPTION,
+        SERVICE_TYPE,
+        SERVICE_EXTEND_TYPE,
+        RELATED_TEMPLATE_TAG,
+        SRV_INTERFACE,
+        SRV_IMPL_CLASS,
+        SRV_METHOD,
+        SRV_RETURN,
+        PROTOCOL,
+        VERSION,
+        STATUS,
+        OP_ID,
+        CREATE_DATE,
+        VALID_DATE,
+        EXPIRE_DATE,
+        EXT_A,
+        EXT_B,
+        EXT_C,
+        REMARKS,
+        MAPPING_CODE,
+        PATH_MAPPING
+        FROM (SELECT  ROWNUM SEQNUM,
+                        A.*,
+                        B.SERVICE_CODE MAPPING_CODE,
+                        B.PATH_MAPPING
+                        FROM CSF.CSF_SRV_ZK_MAPPING B, CSF.CSF_SRV_SERVICE_INFO A
+                        WHERE A.SERVICE_CODE = B.SERVICE_CODE(+)
+                        AND A.CENTER_CODE =  #centerCode#
+                        AND A.STATUS = 'U'
+                        AND ROWNUM < $endNum$ )
+        WHERE SEQNUM > $startNum$
+        ]]>
+    </select>
+
+    <select id="selectServicesCountByCenterCode" parameterClass="java.lang.String" resultClass="java.lang.Integer">
+        SELECT COUNT(1) CUNT_NUM
+          FROM CSF.CSF_SRV_ZK_MAPPING B, CSF.CSF_SRV_SERVICE_INFO A
+         WHERE A.SERVICE_CODE = B.SERVICE_CODE(+)
+           AND A.CENTER_CODE =   #centerCode#
+    </select>
+
+</sqlMap>
